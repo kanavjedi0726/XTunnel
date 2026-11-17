@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XTUNNEL // SECURE TACTICAL E2EE NETWORK</title>
+
+    <!-- Google Fonts matching XTUNNEL tactical identity -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ANIMATED TACTICAL RADAR & MATRIX NETWORK CANVAS -->
+    <canvas id="tactical-canvas"></canvas>
+    <div class="vignette-overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container"></div>
+
+    <!-- =====================================================
+         PAGE 1: OPERATOR LOGIN / REGISTRATION (STEP 1 OF 2)
+    ====================================================== -->
+    <section id="loginPage" class="page active">
+        <div class="auth-wrapper">
+            <div class="logo-wrap">
+                <!-- Tactical Emblem SVG -->
+                <svg width="58" height="58" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="32,3 59,18 59,46 32,61 5,46 5,18" stroke="var(--accent)" stroke-width="2" fill="rgba(255,31,45,0.08)"/>
+                    <polygon points="32,11 51,22 51,42 32,53 13,42 13,22" stroke="var(--green)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                    <path d="M22 22L42 42M42 22L22 42" stroke="var(--accent)" stroke-width="2.5"/>
+                    <circle cx="32" cy="32" r="5" fill="#020304" stroke="var(--green)" stroke-width="2"/>
+                </svg>
+                <div class="logo">XTUNNEL</div>
+                <div class="subtitle">TACTICAL MESH &amp; E2EE COMMUNICATION PROTOCOL</div>
+            </div>
+
+            <div class="cyber-card auth-card">
+                <div class="auth-tabs">
+                    <button id="tabLogin" class="auth-tab active" onclick="switchAuthMode('login')">OPERATOR LOGIN</button>
+                    <button id="tabRegister" class="auth-tab" onclick="switchAuthMode('register')">NEW CLEARANCE</button>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+                    <div class="field">
+                        <div class="field-header">
+                            <label>OPERATOR CALLSIGN / USERNAME</label>
+                            <span class="field-hint">DB_AUTH // STEP 1</span>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">◇</span>
+                            <input type="text" id="loginUsername" class="cyber-input" placeholder="Enter operator username" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-header">
+                            <label>ACCESS PASSWORD</label>
+                            <span class="field-hint">SHA-256 VERIFIED</span>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">◆</span>
+                            <input type="password" id="loginPassword" class="cyber-input" placeholder="Enter access password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cyber-button">
+                        <span>PROCEED TO SECURITY VERIFICATION</span>
+                        <span>→</span>
+                    </button>
+
+                    </form>
+
+                <!-- REGISTER FORM -->
+                <form id="registerForm" class="hidden" onsubmit="handleRegisterSubmit(event)">
+                    <div class="field">
+                        <div class="field-header">
+                            <label>NEW OPERATOR USERNAME</label>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">◇</span>
+                            <input type="text" id="regUsername" class="cyber-input" placeholder="Choose unique callsign" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-header">
+                            <label>MASTER PASSWORD</label>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">◆</span>
+                            <input type="password" id="regPassword" class="cyber-input" placeholder="Create strong password" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-header">
+                            <label>DB SECURITY Q1: ASSIGNED TACTICAL SECTOR?</label>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">?</span>
+                            <input type="text" id="regQ1" class="cyber-input" placeholder="e.g., Sector-7G" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-header">
+                            <label>DB SECURITY Q2: CIPHER RECOVERY CODEWORD?</label>
+                        </div>
+                        <div class="input-wrapper">
+                            <span class="input-icon">?</span>
+                            <input type="text" id="regQ2" class="cyber-input" placeholder="e.g., NIGHTFALL" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cyber-button green-btn">
+                        <span>REGISTER OPERATOR IN DB &amp; CONTINUE</span>
+                    </button>
+                </form>
+
+                <div class="connection-status">
+                    <span class="status-dot"></span>
+                    <span>LOCAL CRYPTOGRAPHIC VAULT INITIALIZED</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         PAGE 2: 2-FACTOR SECURITY QUESTIONS (STEP 2 OF 2)
+    ====================================================== -->
+    <section id="securityPage" class="page">
+        <div class="cyber-card security-card">
+            <div class="step-badge">
+                <span>⚠ CLEARANCE CHECKPOINT // STEP 2 OF 2</span>
+            </div>
+
+            <div class="card-heading">IDENTITY &amp; DB CHALLENGE</div>
+            <p class="card-subtext">
+                Operator <strong id="challengeUserLabel" style="color:var(--accent)">UNKNOWN</strong> authenticated. Answer both cryptographic database security questions below to unlock ECDH key generation and server directory access.
+            </p>
+
+            <div class="field-hint" style="margin-bottom:18px; color:var(--muted); font-family:var(--mono); font-size:11px;">SECURE 2FA: Answer both security questions established during operator registration.</div>
+                <div class="db-record-body" id="dbHintContent">
+                    Loading operator DB record...
+                </div>
+            </div>
+
+            <form onsubmit="verifySecurityQuestions(event)">
+                <div class="field">
+                    <div class="field-header">
+                        <label id="secQuestion1Label">QUESTION 1: WHAT IS YOUR ASSIGNED TACTICAL SECTOR?</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <span class="input-icon">01</span>
+                        <input type="text" id="secAnswer1" class="cyber-input" placeholder="Enter exact DB answer..." autocomplete="off" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="field-header">
+                        <label id="secQuestion2Label">QUESTION 2: ENTER YOUR CIPHER RECOVERY CODEWORD</label>
+                    </div>
+                    <div class="input-wrapper">
+                        <span class="input-icon">02</span>
+                        <input type="text" id="secAnswer2" class="cyber-input" placeholder="Enter exact DB answer..." autocomplete="off" required>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 22px;">
+                    <button type="button" class="cyber-button secondary" onclick="abortToLogin()">← ABORT</button>
+                    <button type="submit" class="cyber-button green-btn">VERIFY &amp; INITIALIZE KEYS</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         PAGE 3: CRYPTOGRAPHIC HANDSHAKE & KEY GENERATION
+    ====================================================== -->
+    <section id="handshakePage" class="page">
+        <div class="cyber-card handshake-card">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="margin:0 auto 12px;">
+                <circle cx="32" cy="32" r="28" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="6 4"/>
+                <rect x="22" y="28" width="20" height="16" rx="2" stroke="var(--accent)" stroke-width="2" fill="rgba(255,31,45,0.12)"/>
+                <path d="M26 28V22C26 18.6863 28.6863 16 32 16C35.3137 16 38 18.6863 38 22V28" stroke="var(--green)" stroke-width="2"/>
+                <circle cx="32" cy="36" r="2.5" fill="var(--green)"/>
+            </svg>
+
+            <div class="card-heading" style="color:var(--green)">ESTABLISHING E2EE TUNNEL</div>
+            <p class="card-subtext" style="margin-bottom:0">
+                Generating WebCrypto ECDH P-256 Key Pair &amp; AES-256-GCM Session Cipher...
+            </p>
+
+            <div class="progress-bar-track">
+                <div id="handshakeProgress" class="progress-bar-fill"></div>
+            </div>
+
+            <div id="handshakeLog" class="terminal-log"></div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         PAGE 4: SERVER DIRECTORY HUB (PUBLIC & PRIVATE SERVERS)
+    ====================================================== -->
+    <section id="hubPage" class="page">
+        <!-- TOP COMMAND BAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="brand-mini">XTUNNEL</div>
+                <div class="crypto-pill">
+                    <span class="status-dot"></span>
+                    <span>E2EE KEYS ACTIVE // AES-256-GCM</span>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="cyber-button secondary" style="width:auto; padding:0 14px;" onclick="openCreateServerModal()">
+                    + DEPLOY NODE
+                </button>
+
+                <!-- Operator Profile Trigger -->
+                <div class="operator-chip" onclick="openProfileModal()" title="Customize Operator Profile & Keys">
+                    <div class="avatar-frame" id="hubAvatarDisplay"></div>
+                    <div class="operator-chip-info">
+                        <span class="operator-chip-name" id="hubOperatorName">GHOST_OPS</span>
+                        <span class="operator-chip-key" id="hubKeyFingerprint">FP: 8F9A...21C4</span>
+                    </div>
+                </div>
+
+                <button class="cyber-button secondary" style="width:auto; padding:0 12px; border-color:var(--accent); color:var(--accent);" onclick="logoutOperator()">
+                    DISCONNECT
+                </button>
+            </div>
+        </header>
+
+        <!-- TACTICAL BANNER WITH CUSTOM SVG RADAR GRAPHIC -->
+        <div class="cyber-card hub-banner">
+            <div>
+                <div class="hub-title">ACTIVE TACTICAL RELAY SERVERS</div>
+                <p class="hub-desc">
+                    Select a <span style="color:var(--green)">PUBLIC MESH NODE</span> for open tactical intelligence or authenticate into a <span style="color:var(--accent)">PRIVATE ENCRYPTED SERVER</span> using a shared room cipher key. All transmissions are encrypted client-side before dispatch.
+                </p>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; z-index:1;">
+                <button class="cyber-button" style="width:auto; padding:0 18px;" onclick="openProfileModal()">
+                    CUSTOMIZE PROFILE
+                </button>
+            </div>
+
+            <!-- Decorative Tactical Network SVG -->
+            <svg class="hub-banner-bg" viewBox="0 0 300 200" fill="none">
+                <circle cx="220" cy="100" r="85" stroke="var(--accent)" stroke-width="1.5"/>
+                <circle cx="220" cy="100" r="55" stroke="var(--green)" stroke-width="1" stroke-dasharray="4 4"/>
+                <circle cx="220" cy="100" r="25" stroke="var(--accent)" stroke-width="1"/>
+                <line x1="120" y1="100" x2="300" y2="100" stroke="var(--accent)" stroke-width="1"/>
+                <line x1="220" y1="0" x2="220" y2="200" stroke="var(--accent)" stroke-width="1"/>
+                <circle cx="255" cy="65" r="4" fill="var(--green)"/>
+                <circle cx="185" cy="125" r="4" fill="var(--accent)"/>
+            </svg>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="hub-controls">
+            <div class="filter-pills">
+                <button class="filter-pill active" onclick="setServerFilter('all', this)">ALL NODES (6)</button>
+                <button class="filter-pill" onclick="setServerFilter('public', this)">PUBLIC RELAYS</button>
+                <button class="filter-pill" onclick="setServerFilter('private', this)">PRIVATE CLASSIFIED</button>
+            </div>
+
+            <div style="font-family:var(--mono); font-size:11px; color:var(--muted);">
+                YOUR PUBLIC KEY FINGERPRINT: <span id="hubBannerFp" style="color:var(--green)">--</span>
+            </div>
+        </div>
+
+        <!-- SERVER CARDS CONTAINER -->
+        <div id="serversGrid" class="servers-grid"></div>
+    </section>
+
+    <!-- =====================================================
+         PAGE 5: ENCRYPTED CHAT CHANNEL
+    ====================================================== -->
+    <section id="chatPage" class="page">
+        <header class="chat-header">
+            <div class="channel-info">
+                <span style="color:var(--muted)">NODE //</span>
+                <span id="chatRoomName" class="room-highlight">CYBER-OPS-ALPHA</span>
+                <span id="chatRoomBadge" class="server-badge private">PRIVATE</span>
+            </div>
+
+            <div class="chat-header-actions">
+                <button id="toggleCipherViewBtn" class="header-tool-btn" onclick="toggleCiphertextView()">
+                    <span>🔒</span>
+                    <span>RAW CIPHERTEXT: OFF</span>
+                </button>
+                <button id="toggleInspectorBtn" class="header-tool-btn" onclick="toggleCryptoInspector()">
+                    <span>🔑</span>
+                    <span>CRYPTO INSPECTOR</span>
+                </button>
+                <button class="header-tool-btn" onclick="openProfileModal()">
+                    <span>⚙</span>
+                    <span>PROFILE</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="chatLayout" class="chat-layout">
+            <!-- LEFT SIDEBAR: ROOM & OPERATORS -->
+            <aside class="sidebar">
+                <div class="room-info">
+                    <div class="section-title">ACTIVE CHANNEL</div>
+                    <div id="sidebarRoomName" class="sidebar-room-name">CYBER-OPS-ALPHA</div>
+                    <div id="sidebarRoomProtocol" class="room-type">AES-256-GCM + ECDH-P256</div>
+                    <div style="margin-top:10px; font-family:var(--mono); font-size:11px; color:var(--green);">
+                        ● <span id="sidebarOnlineCount">5</span> OPERATORS LINKED
+                    </div>
+                </div>
+
+                <div class="users-list">
+                    <div class="section-title">VERIFIED OPERATORS</div>
+                    <div id="operatorsListContainer"></div>
+                </div>
+
+                <!-- Current Operator Mini Card -->
+                <div class="sidebar-profile-box">
+                    <div style="display:flex; align-items:center; gap:9px; min-width:0;">
+                        <div class="avatar-frame" id="chatSidebarAvatar" style="width:30px; height:30px;"></div>
+                        <div style="min-width:0;">
+                            <div id="chatSidebarUser" style="font-family:var(--mono); font-size:11px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">GHOST_OPS</div>
+                            <div id="chatSidebarStatus" style="font-family:var(--mono); font-size:9px; color:var(--green);">● ACTIVE</div>
+                        </div>
+                    </div>
+                    <button class="demo-fill-btn" onclick="openProfileModal()">EDIT</button>
+                </div>
+
+                <div class="leave-area">
+                    <button class="leave-button" onclick="leaveRoom()">
+                        ⇥ &nbsp; EXIT TO SERVER HUB
+                    </button>
+                </div>
+            </aside>
+
+            <!-- CENTER: ENCRYPTED MESSAGE STREAM -->
+            <main class="chat-main">
+                <div class="e2ee-banner-strip">
+                    <span>🛡 END-TO-END ENCRYPTED CHANNEL — MESSAGES ENCRYPTED LOCALLY WITH AES-256-GCM BEFORE DISPATCH</span>
+                    <span id="sessionIvCounter">NONCE/IV: READY</span>
+                </div>
+
+                <div id="messages" class="messages"></div>
+
+                <div id="typingIndicator" style="font-family:var(--mono); font-size:10px; color:var(--green); padding:4px 20px; display:none; background:rgba(0,0,0,0.5);"></div>
+                <div class="message-input-area">
+                    <select id="burnTimerSelect" class="burn-select" title="Self-Destruct Ephemeral Timer">
+                        <option value="0">⏱ PERSIST</option>
+                        <option value="10">🔥 BURN 10s</option>
+                        <option value="30">🔥 BURN 30s</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        id="messageInput"
+                        class="message-input"
+                        placeholder="Enter plaintext message (will be encrypted via AES-256-GCM)..."
+                        autocomplete="off"
+                    >
+
+                    <button class="send-button" onclick="sendMessage()" title="Encrypt & Transmit">
+                        ➤
+                    </button>
+                </div>
+            </main>
+
+            <!-- RIGHT DRAWER: LIVE CRYPTOGRAPHY INSPECTOR -->
+            <aside class="crypto-inspector">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-family:var(--title); font-size:12px; letter-spacing:2px; color:var(--green);">CRYPTO ENGINE</span>
+                    <button class="modal-close" onclick="toggleCryptoInspector()">✕</button>
+                </div>
+
+                <p style="font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.5;">
+                    Real-time WebCrypto telemetry for your active session. Every message generates a unique 96-bit random IV.
+                </p>
+
+                <div class="crypto-box">
+                    <span class="crypto-box-label">KEY EXCHANGE ALGORITHM</span>
+                    <span class="crypto-box-val">ECDH (Elliptic Curve P-256)</span>
+                </div>
+
+                <div class="crypto-box">
+                    <span class="crypto-box-label">SYMMETRIC CIPHER</span>
+                    <span class="crypto-box-val">AES-GCM (256-Bit Authenticated)</span>
+                </div>
+
+                <div class="crypto-box">
+                    <span class="crypto-box-label">YOUR PUBLIC KEY FINGERPRINT (SHA-256)</span>
+                    <span class="crypto-box-val" id="inspectorPubFp">--</span>
+                </div>
+
+                <div class="crypto-box">
+                    <span class="crypto-box-label">ROOM SHARED AES KEY HASH</span>
+                    <span class="crypto-box-val" id="inspectorRoomKey">--</span>
+                </div>
+
+                <div class="crypto-box">
+                    <span class="crypto-box-label">LAST TRANSMITTED PAYLOAD (IV + CIPHERTEXT)</span>
+                    <span class="crypto-box-val" id="inspectorLastCipher" style="color:var(--yellow);">Awaiting transmission...</span>
+                </div>
+
+                <button class="cyber-button secondary" onclick="regenerateUserKeys()">
+                    ↻ ROTATE ECDH KEY PAIR
+                </button>
+            </aside>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         MODAL 1: PRIVATE SERVER PASSCODE PROMPT
+    ====================================================== -->
+    <div id="privateServerModal" class="modal-backdrop">
+        <div class="cyber-card modal-box" style="max-width:440px;">
+            <div class="modal-header">
+                <div class="modal-title">🔒 CLASSIFIED NODE ACCESS</div>
+                <button class="modal-close" onclick="closeModal('privateServerModal')">✕</button>
+            </div>
+
+            <p style="font-family:var(--mono); font-size:11px; color:#aeb5bf; line-height:1.5; margin-bottom:14px;">
+                Server <strong id="modalPrivateServerName" style="color:var(--accent)">--</strong> requires a cryptographic room passphrase to derive the channel decryption key.
+            </p>
+
+            
+                <div class="db-record-body" id="privateServerHintText" style="margin-top:6px; padding-top:6px;"></div>
+            </div>
+
+            <form onsubmit="submitPrivateServerJoin(event)">
+                <div class="field">
+                    <label>ROOM CIPHER PASSPHRASE</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔑</span>
+                        <input type="password" id="privateServerPassInput" class="cyber-input" placeholder="Enter server passphrase..." required>
+                    </div>
+                </div>
+                <button type="submit" class="cyber-button">DERIVE KEY &amp; ENTER CHANNEL</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         MODAL 2: DEPLOY NEW SERVER (PUBLIC OR PRIVATE)
+    ====================================================== -->
+    <div id="createServerModal" class="modal-backdrop">
+        <div class="cyber-card modal-box" style="max-width:460px;">
+            <div class="modal-header">
+                <div class="modal-title">+ DEPLOY RELAY SERVER</div>
+                <button class="modal-close" onclick="closeModal('createServerModal')">✕</button>
+            </div>
+
+            <form onsubmit="handleCreateServer(event)">
+                <div class="field">
+                    <label>SERVER / NODE DESIGNATION</label>
+                    <input type="text" id="newServerName" class="cyber-input no-icon" placeholder="e.g., TITAN-RELAY-09" required>
+                </div>
+
+                <div class="field">
+                    <label>MISSION BRIEF / DESCRIPTION</label>
+                    <input type="text" id="newServerDesc" class="cyber-input no-icon" placeholder="e.g., Tactical field coordination channel" required>
+                </div>
+
+                <div class="field">
+                    <label>ACCESS CLEARANCE TYPE</label>
+                    <select id="newServerType" class="cyber-input no-icon" onchange="toggleNewServerPassField()">
+                        <option value="public">PUBLIC RELAY (OPEN TO ALL VERIFIED OPERATORS)</option>
+                        <option value="private">PRIVATE CLASSIFIED (REQUIRES ROOM CIPHER KEY)</option>
+                    </select>
+                </div>
+
+                <div id="newServerPassField" class="field hidden">
+                    <label>PRIVATE ROOM CIPHER KEY</label>
+                    <input type="text" id="newServerPass" class="cyber-input no-icon" placeholder="Set access passphrase">
+                </div>
+
+                <button type="submit" class="cyber-button green-btn">INITIALIZE SERVER NODE</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         MODAL 3: OPERATOR PROFILE CUSTOMIZATION
+    ====================================================== -->
+    <div id="profileModal" class="modal-backdrop">
+        <div class="cyber-card modal-box">
+            <div class="modal-header">
+                <div class="modal-title">◈ OPERATOR PROFILE &amp; CRYPTO ID</div>
+                <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+            </div>
+
+            <form onsubmit="saveOperatorProfile(event)">
+                <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding:14px; background:rgba(0,0,0,0.55); border:1px solid var(--soft-border);">
+                    <div class="avatar-frame" id="profileModalPreview" style="width:64px; height:64px;"></div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-family:var(--title); font-size:15px; color:#fff;" id="profilePreviewName">GHOST_OPS</div>
+                        <div style="font-family:var(--mono); font-size:11px; color:var(--green); margin-top:3px;" id="profilePreviewBio">Encrypted mesh operative.</div>
+                        <div style="font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:4px;" id="profilePreviewFp">ECDH FP: --</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>DISPLAY CALLSIGN</label>
+                    <input type="text" id="profDisplayName" class="cyber-input no-icon" maxlength="20" required>
+                </div>
+
+                <div class="field">
+                    <label>TACTICAL STATUS MOTTO / BIO</label>
+                    <input type="text" id="profBio" class="cyber-input no-icon" maxlength="60" placeholder="Enter tactical status line...">
+                </div>
+
+                <div class="field">
+                    <label>OPERATIONAL STATUS</label>
+                    <select id="profStatus" class="cyber-input no-icon">
+                        <option value="ACTIVE // ONLINE">● ACTIVE // ONLINE</option>
+                        <option value="STEALTH // RECON">◐ STEALTH // RECON</option>
+                        <option value="ENCRYPTED // BUSY">◆ ENCRYPTED // BUSY</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>SELECT TACTICAL SVG AVATAR</label>
+                    <div class="avatar-grid" id="avatarPickerGrid"></div>
+                </div>
+
+                <div class="field">
+                    <label>OR CUSTOM AVATAR IMAGE URL (OPTIONAL)</label>
+                    <input type="url" id="profCustomAvatarUrl" class="cyber-input no-icon" placeholder="https://example.com/avatar.png (leave blank for SVG avatar)">
+                </div>
+
+                <div class="field">
+                    <label>HUD ACCENT COLOR</label>
+                    <div class="theme-swatches" id="themeSwatchGrid">
+                        <button type="button" class="theme-swatch" data-theme="default" onclick="selectThemeSwatch('default')">
+                            <span class="swatch-dot" style="background:#ff1f2d"></span>CRIMSON
+                        </button>
+                        <button type="button" class="theme-swatch" data-theme="cyan" onclick="selectThemeSwatch('cyan')">
+                            <span class="swatch-dot" style="background:#00e5ff"></span>CYBER CYAN
+                        </button>
+                        <button type="button" class="theme-swatch" data-theme="emerald" onclick="selectThemeSwatch('emerald')">
+                            <span class="swatch-dot" style="background:#18e889"></span>MATRIX
+                        </button>
+                        <button type="button" class="theme-swatch" data-theme="amber" onclick="selectThemeSwatch('amber')">
+                            <span class="swatch-dot" style="background:#ffae00"></span>AMBER
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                    <button type="button" class="cyber-button secondary" onclick="regenerateUserKeys()">↻ NEW ECDH KEYS</button>
+                    <button type="submit" class="cyber-button green-btn">SAVE OPERATOR CONFIG</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SYSTEM TELEMETRY STATUS BAR -->
+    <div class="system-status">
+        <div>● XTUNNEL CORE <span class="ok">ONLINE</span> &nbsp;|&nbsp; CIPHER: <span class="ok">AES-256-GCM / ECDH-P256</span></div>
+        <div id="footerClock">UTC 00:00:00</div>
+    </div>
+
+    <!-- =====================================================
+         APPLICATION LOGIC & WEB CRYPTO ENGINE
+    ====================================================== -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

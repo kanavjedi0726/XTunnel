@@ -1,0 +1,9 @@
+{
+  "name": "xtunnel",
+  "version": "1.0.0",
+  "description": "XTUNNEL - Secure Tactical E2EE Messaging Platform",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node server/test-suite.js"
+  }
+}
