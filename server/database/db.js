@@ -2,7 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-const DB_PATH = path.join(__dirname, 'xtunnel.sqlite');
+const DB_PATH = process.env.VERCEL
+    ? path.join('/tmp', 'xtunnel.sqlite')
+    : path.join(__dirname, 'xtunnel.sqlite');
 const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
 let db;

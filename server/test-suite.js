@@ -40,9 +40,10 @@ async function runTests() {
     console.log('       XTUNNEL AUTOMATED VERIFICATION SUITE         ');
     console.log('====================================================\n');
     
-    const port = config.port || 3000;
+    const port = 3999;
+    await new Promise((resolve) => server.listen(port, resolve));
     baseUrl = `http://127.0.0.1:${port}`;
-    console.log(`[TEST SERVER] Connected to ${baseUrl}\n`);
+    console.log(`[TEST SERVER] Running on ${baseUrl}\n`);
     
     let passed = 0;
     let failed = 0;

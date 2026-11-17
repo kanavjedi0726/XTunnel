@@ -162,62 +162,72 @@ function clearSession() {
 
 // 6. SOCKET.IO REAL-TIME TUNNEL
 function initSocket() {
+    if (typeof io === 'undefined') {
+        console.warn('[XTUNNEL] Socket.IO library not loaded. Operating in REST mode.');
+        return;
+    }
+    
     if (socket) {
         socket.disconnect();
     }
     
-    socket = io({
-        auth: { token: authToken }
-    });
-    
-    socket.on('connect', () => {
-        console.log('[XTUNNEL] Socket tunnel active. Socket ID:', socket.id);
-    });
-    
-    socket.on('connect_error', (err) => {
-        console.error('[XTUNNEL] Socket connection error:', err.message);
-    });
-    
-    socket.on('new-message', async (data) => {
-        await handleIncomingMessage(data);
-    });
-    
-    socket.on('room-users-updated', ({ roomId, onlineUsers }) => {
-        if (currentRoom && currentRoom.roomId === roomId) {
-            renderOnlineUsersList(onlineUsers);
-        }
-    });
-    
-    socket.on('user-joined', (user) => {
-        if (currentUser && user.userId !== currentUser.userId) {
-            showToast('OPERATOR LINKED', user.displayCallsign + ' joined the channel.', 'success');
-        }
-    });
-    
-    socket.on('user-left', ({ username }) => {
-        showToast('OPERATOR DISCONNECTED', username + ' left the channel.', 'warn');
-    });
-    
-    socket.on('user-typing', ({ userId, username }) => {
-        if (currentUser && userId !== currentUser.userId) {
+    try {
+        socket = io({
+            auth: { token: authToken },
+            transports: ['websocket', 'polling']
+        });
+        
+        socket.on('connect', () => {
+            console.log('[XTUNNEL] Socket tunnel active. Socket ID:', socket.id);
+        });
+        
+        socket.on('connect_error', (err) => {
+            console.warn('[XTUNNEL] Socket connection warning:', err.message);
+        });
+        
+        socket.on('new-message', async (data) => {
+            await handleIncomingMessage(data);
+        });
+        
+        socket.on('room-users-updated', ({ roomId, onlineUsers }) => {
+            if (currentRoom && currentRoom.roomId === roomId) {
+                renderOnlineUsersList(onlineUsers);
+            }
+        });
+        
+        socket.on('user-joined', (user) => {
+            if (currentUser && user.userId !== currentUser.userId) {
+                showToast('OPERATOR LINKED', user.displayCallsign + ' joined the channel.', 'success');
+            }
+        });
+        
+        socket.on('user-left', ({ username }) => {
+            showToast('OPERATOR DISCONNECTED', username + ' left the channel.', 'warn');
+        });
+        
+        socket.on('user-typing', ({ userId, username }) => {
+            if (currentUser && userId !== currentUser.userId) {
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) {
+                    typingEl.textContent = '● ' + username + ' is encoding a transmission...';
+                    typingEl.style.display = 'block';
+                }
+            }
+        });
+        
+        socket.on('user-stop-typing', ({ userId }) => {
             const typingEl = document.getElementById('typingIndicator');
             if (typingEl) {
-                typingEl.textContent = '● ' + username + ' is encoding a transmission...';
-                typingEl.style.display = 'block';
+                typingEl.style.display = 'none';
             }
-        }
-    });
-    
-    socket.on('user-stop-typing', ({ userId }) => {
-        const typingEl = document.getElementById('typingIndicator');
-        if (typingEl) {
-            typingEl.style.display = 'none';
-        }
-    });
-    
-    socket.on('error', (err) => {
-        showToast('TUNNEL ALERT', err.message || 'Operation error', 'danger');
-    });
+        });
+        
+        socket.on('error', (err) => {
+            showToast('TUNNEL ALERT', err.message || 'Operation error', 'danger');
+        });
+    } catch (e) {
+        console.warn('[XTUNNEL] Socket initialization failed:', e.message);
+    }
 }
 
 // 7. WEBCRYPTO API SUITE (ECDH P-256 + AES-256-GCM + HKDF/SHA-256)
@@ -1037,22 +1047,35 @@ function appendMessageElement(data) {
 async function sendMessage() {
     const input = document.getElementById('messageInput');
     const text = input.value.trim();
-    if (!text || !currentRoom || !socket) return;
+    if (!text || !currentRoom) return;
     
     const burnSeconds = parseInt(document.getElementById('burnTimerSelect').value, 10) || 0;
     
     try {
         const encrypted = await encryptMessagePayload(text);
         
-        socket.emit('send-message', {
-            roomId: currentRoom.roomId,
-            ciphertext_b64: encrypted.cipherBase64,
-            iv_b64: encrypted.ivBase64,
-            burn_after_seconds: burnSeconds
-        });
+        if (socket && socket.connected) {
+            socket.emit('send-message', {
+                roomId: currentRoom.roomId,
+                ciphertext_b64: encrypted.cipherBase64,
+                iv_b64: encrypted.ivBase64,
+                burn_after_seconds: burnSeconds
+            });
+            socket.emit('stop-typing', { roomId: currentRoom.roomId });
+        } else {
+            // REST Fallback for serverless environments (e.g. Vercel)
+            await apiCall('/rooms/' + currentRoom.roomId + '/messages', {
+                method: 'POST',
+                body: JSON.stringify({
+                    ciphertext_b64: encrypted.cipherBase64,
+                    iv_b64: encrypted.ivBase64,
+                    burn_after_seconds: burnSeconds
+                })
+            });
+            await loadMessageHistory(currentRoom.roomId);
+        }
         
         input.value = '';
-        socket.emit('stop-typing', { roomId: currentRoom.roomId });
     } catch (err) {
         showToast('ENCRYPTION FAILURE', 'Failed to encrypt message payload: ' + err.message, 'danger');
     }

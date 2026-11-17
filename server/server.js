@@ -63,16 +63,20 @@ setupSocketHandler(io, app);
 // Initialize database
 getDb();
 
-// Clean expired messages every 60 seconds
-setInterval(cleanExpiredMessages, 60 * 1000);
+// Clean expired messages every 60 seconds (when running as persistent server)
+if (!process.env.VERCEL) {
+    setInterval(cleanExpiredMessages, 60 * 1000);
+}
 
-// Start server
-server.listen(config.port, () => {
-    console.log(`\n╔══════════════════════════════════════════╗`);
-    console.log(`║  XTUNNEL TACTICAL E2EE MESH ONLINE       ║`);
-    console.log(`║  Port: ${config.port}  Mode: ${config.nodeEnv.toUpperCase().padEnd(12)}       ║`);
-    console.log(`║  http://localhost:${config.port}                   ║`);
-    console.log(`╚══════════════════════════════════════════╝\n`);
-});
+// Start server (when directly executed and not in a serverless environment)
+if (!process.env.VERCEL && require.main === module) {
+    server.listen(config.port, () => {
+        console.log(`\n╔══════════════════════════════════════════╗`);
+        console.log(`║  XTUNNEL TACTICAL E2EE MESH ONLINE       ║`);
+        console.log(`║  Port: ${config.port}  Mode: ${config.nodeEnv.toUpperCase().padEnd(12)}       ║`);
+        console.log(`║  http://localhost:${config.port}                   ║`);
+        console.log(`╚══════════════════════════════════════════╝\n`);
+    });
+}
 
 module.exports = { app, server };
